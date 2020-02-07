@@ -1,0 +1,7 @@
+__pycache__
+.DS_Store
+.dynamodb
+.serverless
+.vscode
+node_modules
+.python-version

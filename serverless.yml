@@ -1,0 +1,73 @@
+org: jmaslanka
+service: serverless-flask
+
+plugins:
+  - serverless-python-requirements
+  - serverless-wsgi
+  - serverless-dynamodb-local
+
+custom:
+  urlTableName: 'url-table-${self:provider.stage}'
+  wsgi:
+    app: src.app.app
+    packRequirements: false
+  pythonRequirements:
+    dockerizePip: non-linux
+  dynamodb:
+    stages:
+      - ${self:provider.stage}
+    start:
+      migrate: true
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: dev
+  region: eu-central-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["UrlsDynamoDBTable", "Arn" ] }
+  environment:
+    URLS_TABLE: ${self:custom.urlTableName}
+    S3_BUCKET: 'flask-pdf-url'
+    S3_BUCKET_REGION: 'eu-central-1'
+
+functions:
+  convertPdf:
+    handler: wsgi_handler.handler
+    events:
+      - http: 'POST /htmlToPdf/'
+  createUrl:
+    handler: wsgi_handler.handler
+    events:
+      - http: 'POST /newUrl/'
+  getUrl:
+    handler: wsgi_handler.handler
+    events:
+      - http: 'GET /r/{proxy+}'
+
+resources:
+  Resources:
+    UrlsDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.urlTableName}
