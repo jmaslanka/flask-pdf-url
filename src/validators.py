@@ -10,7 +10,6 @@ ALLOWED_MIME_TYPES = ['text/html', 'application/xhtml+xml']
 
 
 def validate_url(url: str) -> bool:
-    """"""
     if not url:
         return False
 

@@ -45,6 +45,7 @@ functions:
     handler: wsgi_handler.handler
     events:
       - http: 'POST /htmlToPdf/'
+      - sqs: arn:aws:sqs:eu-central-1:413915321176:flask-pdf-queue
   createUrl:
     handler: wsgi_handler.handler
     events:
